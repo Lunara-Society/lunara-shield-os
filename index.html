@@ -889,7 +889,7 @@ function closeChat(){
   o.style.transform='translateX(100%)';
   setTimeout(()=>{o.style.display='none';o.classList.remove('on');},300);
 }
-function sendMsg(){
+async function sendMsg(){
   const inp=document.getElementById('ci');
   const txt=inp.value.trim();
   if(!txt||!curAgent)return;
@@ -897,20 +897,37 @@ function sendMsg(){
   const t=String(new Date().getHours()).padStart(2,'0')+':'+String(new Date().getMinutes()).padStart(2,'0');
   a.msgs.push({from:'f',text:txt,t});
   inp.value='';
+  inp.disabled=true;
   const m=document.getElementById('cov-msgs');
   m.innerHTML+=`<div class="msg ff"><div class="mb">${txt}</div><div class="mt">${t}</div></div>`;
   m.scrollTop=m.scrollHeight;
-  const replies={
-    raven:['Understood, Rosario. Actioning immediately.','Acknowledged. Processing directive.','Intelligence logged. Proceeding.','Directive received. Will report back.'],
-    maya:['Received. Preparing accordingly.','Understood. Standing by.'],
-  };
-  setTimeout(()=>{
-    const arr=replies[curAgent];
-    const r=arr[Math.floor(Math.random()*arr.length)];
-    a.msgs.push({from:'a',text:r,t});
-    m.innerHTML+=`<div class="msg fa"><div class="mb">${r}</div><div class="mt">${t}</div></div>`;
+  // Show typing indicator
+  const typingId='typing-'+Date.now();
+  m.innerHTML+=`<div id="${typingId}" class="msg fa"><div class="mb" style="opacity:.45;font-style:italic;font-size:10px;">${a.name} is processing...</div></div>`;
+  m.scrollTop=m.scrollHeight;
+  try {
+    // Call real Raven via shieldBrain API
+    const res=await fetch(BRAIN_API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'chat',agentId:'6a3e0aa38bd048a48ee501b1',message:txt})
+    });
+    const data=await res.json();
+    const reply=data.reply||data.error||'Message received.';
+    const typingEl=document.getElementById(typingId);
+    if(typingEl)typingEl.remove();
+    const rt=String(new Date().getHours()).padStart(2,'0')+':'+String(new Date().getMinutes()).padStart(2,'0');
+    a.msgs.push({from:'a',text:reply,t:rt});
+    m.innerHTML+=`<div class="msg fa"><div class="mb">${reply}</div><div class="mt">${rt}</div></div>`;
     m.scrollTop=m.scrollHeight;
-  },1100);
+  } catch(err) {
+    const typingEl=document.getElementById(typingId);
+    if(typingEl)typingEl.remove();
+    m.innerHTML+=`<div class="msg fa"><div class="mb" style="color:rgba(220,70,60,.8);">Could not reach agent. Check connection.</div></div>`;
+    m.scrollTop=m.scrollHeight;
+  }
+  inp.disabled=false;
+  inp.focus();
 }
 
 // ── VOICE ──
@@ -924,7 +941,7 @@ function toggleVoice(){
 // ════════════════════════════════════
 // LIVE DRIVE BRAIN INTEGRATION
 // ════════════════════════════════════
-const BRAIN_API = 'https://api.base44.com/api/apps/6a3e0aa38bd048a48ee501b1/functions/shieldBrain';
+const BRAIN_API = 'https://superagent-8ee501b1.base44.app/functions/shieldBrain';
 
 async function callBrain(params) {
   const qs = new URLSearchParams(params).toString();
