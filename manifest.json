@@ -1,0 +1,20 @@
+{
+  "name": "Shield OS — Lunara Society",
+  "short_name": "Shield OS",
+  "description": "Lunara Society Private Institutional Command Center",
+  "start_url": "/lunara-shield-os/",
+  "scope": "/lunara-shield-os/",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/lunara-shield-os/shield-logo.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
