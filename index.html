@@ -920,6 +920,204 @@ function toggleVoice(){
   setTimeout(()=>b.classList.remove('active'),2000);
 }
 
+
+// ════════════════════════════════════
+// LIVE DRIVE BRAIN INTEGRATION
+// ════════════════════════════════════
+const BRAIN_API = 'https://api.base44.com/api/apps/6a3e0aa38bd048a48ee501b1/functions/shieldBrain';
+
+async function callBrain(params) {
+  const qs = new URLSearchParams(params).toString();
+  try {
+    const res = await fetch(BRAIN_API + '?' + qs);
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+
+// ── LIVE BRAIN FOLDERS PAGE ──
+async function loadBrainFolders() {
+  const container = document.getElementById('brain-folders-live');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:20px;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(196,164,107,.3);">Connecting to brain...</div>';
+  const data = await callBrain({ action: 'folders' });
+  if (!data || !data.folders) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;font-size:9px;color:var(--faint);">Could not reach institutional brain.</div>';
+    return;
+  }
+  const sorted = data.folders.sort((a, b) => a.id.localeCompare(b.id));
+  container.innerHTML = sorted.map(f => `
+    <div class="row" style="cursor:pointer;" onclick="openFolderDrw('${f.id}','${f.name}')">
+      <div style="width:30px;height:30px;border-radius:4px;background:rgba(196,164,107,.07);border:1px solid var(--gb);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:8px;color:var(--gm);font-family:'Cormorant Garamond',serif;font-weight:600;">${f.id}</span>
+      </div>
+      <div class="rib">
+        <div class="rn">${f.id} — ${f.name}</div>
+        <div class="rd">${f.count} document${f.count !== 1 ? 's' : ''}</div>
+      </div>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.25)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  `).join('');
+}
+
+// ── LIVE RECENT DOCS ──
+async function loadRecentDocs() {
+  const container = document.getElementById('recent-docs-live');
+  if (!container) return;
+  const data = await callBrain({ action: 'recent' });
+  if (!data || !data.files || !data.files.length) return;
+  const mimeIcon = (mime) => {
+    if (mime === 'application/vnd.google-apps.document') return '📄';
+    if (mime === 'text/plain' || mime === 'text/markdown') return '📝';
+    if (mime === 'application/pdf') return '📕';
+    return '📎';
+  };
+  container.innerHTML = data.files.map(f => `
+    <div class="row" style="cursor:pointer;" onclick="openFileViewer('${f.id}','${f.name.replace(/'/g,"\'")}','${f.webViewLink||''}')">
+      <div style="font-size:16px;flex-shrink:0;">${mimeIcon(f.mimeType)}</div>
+      <div class="rib">
+        <div class="rn">${f.name}</div>
+        <div class="rd">${f.folder} · ${f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : ''}</div>
+      </div>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.25)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  `).join('');
+}
+
+// ── FOLDER DRAWER ──
+async function openFolderDrw(folderId, folderName) {
+  document.getElementById('dcnt').innerHTML = `
+    <div class="dt">${folderId} — ${folderName}</div>
+    <div class="ds">Loading documents...</div>
+  `;
+  document.getElementById('drw').classList.add('open');
+  const data = await callBrain({ action: 'files', folder: folderId });
+  if (!data || !data.files) { document.getElementById('dcnt').innerHTML += '<div class="cs">Could not load files.</div>'; return; }
+  const files = data.files;
+  document.getElementById('dcnt').innerHTML = `
+    <div class="dt">${folderId} — ${folderName}</div>
+    <div class="ds">${files.length} document${files.length!==1?'s':''}</div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+      ${files.length === 0 ? '<div class="cs">No documents yet.</div>' : files.map(f => `
+        <div class="row" style="cursor:pointer;" onclick="openFileViewer('${f.id}','${f.name.replace(/'/g,"\'")}','${f.webViewLink||''}')">
+          <div class="rib">
+            <div class="rn" style="font-size:11px;">${f.name}</div>
+            <div class="rd">${f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : ''}</div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,.3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ── FILE VIEWER ──
+const fileViewerOverlay = document.createElement('div');
+fileViewerOverlay.id = 'fvov';
+fileViewerOverlay.style.cssText = 'position:fixed;inset:0;z-index:600;background:#000;display:none;flex-direction:column;transform:translateX(100%);transition:transform .3s ease;';
+document.body.appendChild(fileViewerOverlay);
+
+async function openFileViewer(fileId, fileName, webViewLink) {
+  fileViewerOverlay.style.display = 'flex';
+  fileViewerOverlay.style.flexDirection = 'column';
+  fileViewerOverlay.innerHTML = `
+    <div style="padding:var(--st) 15px 12px;background:rgba(5,4,2,.97);border-bottom:1px solid var(--gb);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <div onclick="closeFileViewer()" style="cursor:pointer;padding:5px;opacity:.5;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--gh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${fileName}</div>
+        <div style="font-size:7px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin-top:2px;">Institutional Brain</div>
+      </div>
+      ${webViewLink ? `<a href="${webViewLink}" target="_blank" style="font-size:7.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--gm);border:1px solid var(--gb);padding:4px 10px;border-radius:20px;text-decoration:none;flex-shrink:0;">Drive ↗</a>` : ''}
+    </div>
+    <div id="fv-content" style="flex:1;overflow-y:auto;padding:16px;font-size:11.5px;line-height:1.75;color:rgba(255,255,255,.75);font-family:'Inter',sans-serif;font-weight:300;white-space:pre-wrap;">
+      <div style="text-align:center;padding:40px;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:rgba(196,164,107,.3);">Loading document...</div>
+    </div>
+  `;
+  setTimeout(() => fileViewerOverlay.style.transform = 'translateX(0)', 10);
+  const data = await callBrain({ action: 'read', fileId });
+  const el = document.getElementById('fv-content');
+  if (el) {
+    if (data && data.content) {
+      el.textContent = data.content;
+    } else {
+      el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--faint);">Could not load document content.<br><a href="${webViewLink}" target="_blank" style="color:var(--gm);">Open in Google Drive ↗</a></div>`;
+    }
+  }
+}
+
+function closeFileViewer() {
+  fileViewerOverlay.style.transform = 'translateX(100%)';
+  setTimeout(() => fileViewerOverlay.style.display = 'none', 300);
+}
+
+// ── LIVE SEARCH (override doSearch to also search Drive) ──
+let searchTimeout = null;
+const originalDoSearch = doSearch;
+function doSearch(q) {
+  const res = document.getElementById('search-results');
+  const empty = document.getElementById('search-empty');
+  if (!q.trim()) { res.innerHTML = ''; empty.style.display = 'flex'; return; }
+  empty.style.display = 'none';
+  // First show local results
+  const typeColors = {Doctrine:'to',Strategy:'ta',Systems:'tb',Research:'tg',Intelligence:'tb',Project:'tr',Agent:'to'};
+  const localMatches = SEARCH_DATA.filter(s =>
+    s.title.toLowerCase().includes(q.toLowerCase()) ||
+    s.desc.toLowerCase().includes(q.toLowerCase()) ||
+    s.type.toLowerCase().includes(q.toLowerCase()) ||
+    s.folder.toLowerCase().includes(q.toLowerCase())
+  );
+  // Show local results immediately
+  let html = localMatches.map(m => `
+    <div class="sritem" onclick="openDrawer('sr-${m.type}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="tag ${typeColors[m.type]||'to'}">${m.type}</div>
+        <div style="font-size:7.5px;color:rgba(196,164,107,.3);letter-spacing:.1em;">${m.folder}</div>
+      </div>
+      <div class="srtitle">${m.title}</div>
+      <div class="srdesc">${m.desc}</div>
+    </div>
+  `).join('');
+  // Add live Drive results section
+  html += `<div id="live-drive-results"><div style="text-align:center;padding:14px;font-size:7.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(196,164,107,.3);">Searching live brain...</div></div>`;
+  res.innerHTML = html;
+  // Debounce Drive search
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    const data = await callBrain({ action: 'search', q });
+    const liveEl = document.getElementById('live-drive-results');
+    if (!liveEl) return;
+    if (!data || !data.results || !data.results.length) {
+      liveEl.innerHTML = '';
+      if (!localMatches.length) { res.innerHTML = '<div style="text-align:center;padding:30px;font-size:9px;color:var(--faint);">No results found</div>'; }
+      return;
+    }
+    liveEl.innerHTML = `
+      <div style="font-size:7px;letter-spacing:.22em;text-transform:uppercase;color:var(--gm);padding:8px 0 4px;">Live Brain — ${data.count} results</div>
+      ${data.results.map(f => `
+        <div class="sritem" style="cursor:pointer;" onclick="openFileViewer('${f.id}','${f.name.replace(/'/g,"\'")}','${f.webViewLink||''}')">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div class="tag to">Brain</div>
+            <div style="font-size:7.5px;color:rgba(196,164,107,.3);">${f.folder}</div>
+          </div>
+          <div class="srtitle">${f.name}</div>
+          <div class="srdesc">${f.modifiedTime ? 'Modified ' + new Date(f.modifiedTime).toLocaleDateString() : ''}</div>
+        </div>
+      `).join('')}
+    `;
+  }, 600);
+}
+
+// ── AUTO-LOAD ON PAGE CHANGE ──
+const _origGoTo = goTo;
+function goTo(id) {
+  _origGoTo(id);
+  if (id === 'brain') { loadBrainFolders(); loadRecentDocs(); }
+}
+
+// Load recent docs on boot (after 4s)
+setTimeout(() => loadRecentDocs(), 4000);
+
 // ── SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
