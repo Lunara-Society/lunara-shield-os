@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Shield OS">
+<title>Shield OS — Lunara Society</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="shield-logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#C4A46B;
+  --gold-dim:rgba(196,164,107,0.12);
+  --gold-border:rgba(196,164,107,0.22);
+  --gold-mid:rgba(196,164,107,0.50);
+  --gold-bright:rgba(196,164,107,0.85);
+  --black:#000;
+  --panel:rgba(6,5,3,0.88);
+  --panel-light:rgba(12,10,6,0.75);
+  --text:rgba(255,255,255,0.88);
+  --text-dim:rgba(255,255,255,0.40);
+  --text-faint:rgba(255,255,255,0.18);
+  --red:rgba(220,70,60,0.90);
+  --green:rgba(70,200,100,0.90);
+  --amber:rgba(220,170,50,0.90);
+  --blue:rgba(80,140,220,0.90);
+  --safe-top:max(env(safe-area-inset-top),16px);
+  --safe-bottom:max(env(safe-area-inset-bottom),16px);
+}
+html,body{width:100%;height:100%;background:#000;font-family:"Inter",sans-serif;font-weight:300;color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+
+/* ════════════════════════════════════
+   BOOT SCREEN
+════════════════════════════════════ */
+#boot{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.2s ease;}
+#boot.fade-out{opacity:0;pointer-events:none;}
+.boot-crest{width:72px;height:72px;border-radius:50%;border:1px solid var(--gold-mid);background:url("shield-logo.jpg") center/cover;animation:crestPulse 3s ease-in-out infinite;}
+@keyframes crestPulse{0%,100%{box-shadow:0 0 0 0 rgba(196,164,107,0);}50%{box-shadow:0 0 28px 6px rgba(196,164,107,0.12);}}
+.boot-rule{width:60px;height:1px;background:linear-gradient(to right,transparent,var(--gold-mid),transparent);margin:18px auto;}
+.boot-name{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:17px;letter-spacing:0.42em;text-transform:uppercase;color:var(--gold-bright);}
+.boot-sub{font-size:7px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(196,164,107,0.35);margin-top:7px;}
+.boot-status{font-size:8px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(196,164,107,0.25);margin-top:28px;}
+.boot-bar{width:100px;height:1px;background:rgba(196,164,107,0.08);margin-top:10px;overflow:hidden;}
+.boot-fill{height:100%;background:linear-gradient(to right,transparent,var(--gold-mid),transparent);animation:sweep 1.4s ease-in-out infinite;}
+@keyframes sweep{0%{margin-left:-100%;}100%{margin-left:100%;}}
+
+/* ════════════════════════════════════
+   APP SHELL
+════════════════════════════════════ */
+#app{position:fixed;inset:0;opacity:0;transition:opacity 0.8s ease;pointer-events:none;display:flex;flex-direction:column;}
+#app.on{opacity:1;pointer-events:all;}
+
+/* Background */
+#bg{position:absolute;inset:0;z-index:0;background:url("bg-mobile.jpg") center/cover no-repeat;}
+#bg-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.1) 20%,rgba(0,0,0,0.2) 60%,rgba(0,0,0,0.96) 100%);}
+
+/* Status Bar */
+#statusbar{position:relative;z-index:10;padding:var(--safe-top) 18px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.sb-left{display:flex;flex-direction:column;}
+.sb-brand{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:12px;letter-spacing:0.38em;text-transform:uppercase;color:var(--gold-bright);}
+.sb-sub{font-size:6px;letter-spacing:0.25em;text-transform:uppercase;color:rgba(196,164,107,0.32);margin-top:3px;}
+.sb-right{display:flex;align-items:center;gap:10px;}
+#clock{font-family:"Cormorant Garamond",serif;font-size:11px;letter-spacing:0.14em;color:var(--gold-mid);}
+.sb-badge{font-size:6px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(196,164,107,0.4);border:1px solid var(--gold-border);border-radius:20px;padding:3px 8px;background:rgba(0,0,0,0.5);}
+.notif-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;}
+.notif-btn svg{width:15px;height:15px;opacity:0.5;}
+.notif-dot{position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1px solid #000;}
+
+/* Content Area */
+#content{position:relative;z-index:5;flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+/* Pages */
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:12px 16px;display:none;flex-direction:column;gap:14px;padding-bottom:100px;}
+.page.active{display:flex;}
+
+/* ════════════════════════════════════
+   BOTTOM NAV
+════════════════════════════════════ */
+#nav{
+  position:relative;z-index:10;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-around;
+  padding:10px 0 var(--safe-bottom);
+  background:linear-gradient(to top,rgba(0,0,0,0.97) 0%,rgba(0,0,0,0.88) 100%);
+  border-top:1px solid var(--gold-border);
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:2px 10px;flex:1;transition:all 0.2s;}
+.nav-item svg{width:20px;height:20px;opacity:0.35;transition:all 0.2s;}
+.nav-item span{font-size:7px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(196,164,107,0.3);transition:all 0.2s;}
+.nav-item.active svg{opacity:1;filter:drop-shadow(0 0 5px rgba(196,164,107,0.5));}
+.nav-item.active span{color:var(--gold-bright);}
+.nav-item:active{transform:scale(0.92);}
+
+/* ════════════════════════════════════
+   SECTION HEADERS
+════════════════════════════════════ */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.section-title{font-size:7.5px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-mid);}
+.section-action{font-size:7px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(196,164,107,0.35);cursor:pointer;}
+
+/* ════════════════════════════════════
+   CARDS
+════════════════════════════════════ */
+.card{
+  background:var(--panel);
+  border:1px solid var(--gold-border);
+  border-radius:6px;
+  padding:14px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold-dim),transparent);}
+.card-title{font-family:"Cormorant Garamond",serif;font-size:14px;font-weight:400;color:var(--gold-bright);margin-bottom:4px;}
+.card-sub{font-size:9px;letter-spacing:0.1em;color:var(--text-dim);line-height:1.5;}
+.card-meta{font-size:7.5px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(196,164,107,0.3);margin-top:10px;}
+
+.card-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(196,164,107,0.08);}
+.card-row:last-child{border-bottom:none;padding-bottom:0;}
+.row-icon{width:32px;height:32px;border-radius:50%;border:1px solid var(--gold-border);background:var(--gold-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.row-icon svg{width:15px;height:15px;opacity:0.7;}
+.row-body{flex:1;min-width:0;}
+.row-name{font-size:12px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-desc{font-size:9px;color:var(--text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+
+/* Status Dots */
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-green{background:var(--green);box-shadow:0 0 6px rgba(70,200,100,0.5);}
+.dot-amber{background:var(--amber);box-shadow:0 0 6px rgba(220,170,50,0.4);}
+.dot-red{background:var(--red);box-shadow:0 0 6px rgba(220,70,60,0.4);}
+.dot-dim{background:rgba(255,255,255,0.12);}
+
+/* Priority Tags */
+.tag{display:inline-flex;align-items:center;font-size:6.5px;letter-spacing:0.15em;text-transform:uppercase;padding:2px 7px;border-radius:20px;}
+.tag-red{background:rgba(220,70,60,0.12);border:1px solid rgba(220,70,60,0.3);color:rgba(220,120,110,0.9);}
+.tag-amber{background:rgba(220,170,50,0.12);border:1px solid rgba(220,170,50,0.3);color:rgba(220,190,80,0.9);}
+.tag-green{background:rgba(70,200,100,0.10);border:1px solid rgba(70,200,100,0.25);color:rgba(100,210,130,0.9);}
+.tag-blue{background:rgba(80,140,220,0.10);border:1px solid rgba(80,140,220,0.25);color:rgba(120,170,230,0.9);}
+.tag-gold{background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold-mid);}
+
+/* Alert Cards */
+.alert{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px;border-radius:6px;
+  border-left:2px solid;
+}
+.alert-red{background:rgba(220,70,60,0.07);border-color:var(--red);}
+.alert-amber{background:rgba(220,170,50,0.07);border-color:var(--amber);}
+.alert-gold{background:var(--gold-dim);border-color:var(--gold-mid);}
+.alert-title{font-size:11px;font-weight:400;color:var(--text);margin-bottom:3px;}
+.alert-body{font-size:9px;color:var(--text-dim);line-height:1.5;}
+.alert-time{font-size:7.5px;letter-spacing:0.1em;color:rgba(196,164,107,0.3);margin-top:6px;}
+
+/* Stat Blocks */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stat-block{background:var(--panel-light);border:1px solid var(--gold-border);border-radius:6px;padding:12px;text-align:center;}
+.stat-value{font-family:"Cormorant Garamond",serif;font-size:28px;color:var(--gold-bright);font-weight:300;line-height:1;}
+.stat-label{font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-top:5px;}
+.stat-change{font-size:8.5px;color:var(--green);margin-top:3px;}
+
+/* Progress */
+.progress-bar{height:2px;background:rgba(196,164,107,0.1);border-radius:2px;overflow:hidden;margin-top:8px;}
+.progress-fill{height:100%;background:linear-gradient(to right,var(--gold-mid),var(--gold-bright));border-radius:2px;}
+
+/* Divider */
+.divider{height:1px;background:linear-gradient(to right,transparent,var(--gold-border),transparent);margin:2px 0;}
+
+/* Pill Row (for filters) */
+.pill-row{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none;}
+.pill-row::-webkit-scrollbar{display:none;}
+.pill{font-size:8px;letter-spacing:0.14em;text-transform:uppercase;padding:5px 12px;border-radius:20px;border:1px solid var(--gold-border);color:var(--text-dim);white-space:nowrap;cursor:pointer;flex-shrink:0;transition:all 0.2s;}
+.pill.active{background:var(--gold-dim);color:var(--gold-bright);border-color:var(--gold-mid);}
+
+/* Chat Area */
+.chat-list{display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:82%;display:flex;flex-direction:column;gap:3px;}
+.msg.from-agent{align-self:flex-start;}
+.msg.from-founder{align-self:flex-end;}
+.msg-bubble{padding:10px 13px;border-radius:10px;font-size:11px;line-height:1.55;color:var(--text);}
+.from-agent .msg-bubble{background:var(--panel);border:1px solid var(--gold-border);border-bottom-left-radius:2px;}
+.from-founder .msg-bubble{background:rgba(196,164,107,0.14);border:1px solid rgba(196,164,107,0.28);border-bottom-right-radius:2px;}
+.msg-time{font-size:7.5px;color:var(--text-faint);letter-spacing:0.08em;padding:0 4px;}
+.from-founder .msg-time{text-align:right;}
+
+/* Chat Input */
+.chat-input-area{
+  position:sticky;bottom:0;
+  background:rgba(0,0,0,0.95);
+  border-top:1px solid var(--gold-border);
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+}
+.chat-input{
+  flex:1;background:var(--panel-light);border:1px solid var(--gold-border);border-radius:20px;
+  padding:9px 14px;font-size:12px;color:var(--text);font-family:"Inter",sans-serif;font-weight:300;
+  outline:none;-webkit-appearance:none;
+}
+.chat-input::placeholder{color:var(--text-faint);}
+.chat-send{width:34px;height:34px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.chat-send svg{width:14px;height:14px;opacity:0.7;}
+
+/* Search */
+.search-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--panel);border:1px solid var(--gold-border);border-radius:8px;
+  padding:10px 14px;
+}
+.search-bar svg{width:14px;height:14px;opacity:0.35;flex-shrink:0;}
+.search-bar input{flex:1;background:none;border:none;outline:none;font-size:12px;color:var(--text);font-family:"Inter",sans-serif;font-weight:300;}
+.search-bar input::placeholder{color:var(--text-faint);}
+
+/* Large CTA Button */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px;border-radius:6px;cursor:pointer;
+  font-size:9px;letter-spacing:0.22em;text-transform:uppercase;
+  transition:all 0.2s;
+}
+.btn-gold{background:rgba(196,164,107,0.1);border:1px solid var(--gold-mid);color:var(--gold-bright);}
+.btn-gold:active{background:rgba(196,164,107,0.2);}
+.btn-ghost{background:transparent;border:1px solid var(--gold-border);color:var(--text-dim);}
+
+/* Panel Drawer (slide up) */
+#drawer{
+  position:fixed;inset:0;z-index:500;pointer-events:none;
+}
+#drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,0.75);opacity:0;transition:opacity 0.3s;}
+#drawer-panel{
+  position:absolute;bottom:0;left:0;right:0;
+  background:#0a0805;border-top:1px solid var(--gold-border);
+  border-radius:16px 16px 0 0;padding:20px 18px;padding-bottom:var(--safe-bottom);
+  transform:translateY(100%);transition:transform 0.3s ease;
+  max-height:85vh;overflow-y:auto;
+}
+#drawer.open{pointer-events:all;}
+#drawer.open #drawer-bg{opacity:1;}
+#drawer.open #drawer-panel{transform:translateY(0);}
+.drawer-handle{width:36px;height:3px;border-radius:2px;background:var(--gold-border);margin:0 auto 18px;}
+.drawer-title{font-family:"Cormorant Garamond",serif;font-size:18px;color:var(--gold-bright);margin-bottom:4px;}
+.drawer-sub{font-size:9px;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:18px;}
+
+/* ════════════════════════════════════
+   PAGE: HOME (COMMAND CENTER)
+════════════════════════════════════ */
+.home-greeting{padding:10px 0 4px;}
+.greeting-line{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:22px;color:var(--gold-bright);}
+.greeting-date{font-size:8px;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;}
+
+/* ════════════════════════════════════
+   PAGE: AGENTS
+════════════════════════════════════ */
+.agent-crest{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold-border);background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",serif;font-size:15px;color:var(--gold-bright);flex-shrink:0;}
+
+/* ════════════════════════════════════
+   PAGE: INTEL (BRIEFINGS)
+════════════════════════════════════ */
+.intel-header{background:var(--panel);border:1px solid var(--gold-border);border-radius:6px;padding:14px;position:relative;overflow:hidden;}
+.intel-header::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold-mid),transparent);}
+.classification{font-size:7px;letter-spacing:0.3em;text-transform:uppercase;color:var(--red);margin-bottom:6px;}
+.intel-title{font-family:"Cormorant Garamond",serif;font-size:16px;color:var(--gold-bright);margin-bottom:4px;}
+.confidence-stars{font-size:12px;color:var(--gold-mid);letter-spacing:2px;}
+
+/* Scrollable report text */
+.report-text{font-size:11px;line-height:1.65;color:var(--text-dim);}
+.report-section{font-size:8px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold-mid);margin:14px 0 8px;}
+
+</style>
+</head>
+<body>
+
+<!-- ════ BOOT ════ -->
+<div id="boot">
+  <div class="boot-crest"></div>
+  <div class="boot-rule"></div>
+  <div class="boot-name">Shield OS</div>
+  <div class="boot-sub">Lunara Society — Command Center</div>
+  <div class="boot-status" id="boot-status">Initializing systems</div>
+  <div class="boot-bar"><div class="boot-fill"></div></div>
+</div>
+
+<!-- ════ APP SHELL ════ -->
+<div id="app">
+  <div id="bg"></div>
+  <div id="bg-veil"></div>
+
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <div class="sb-left">
+      <div class="sb-brand">Shield OS</div>
+      <div class="sb-sub">Lunara Society</div>
+    </div>
+    <div class="sb-right">
+      <div id="clock">00:00</div>
+      <div class="sb-badge">SECURE</div>
+      <div class="notif-btn" onclick="openDrawer('notifications')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><path d="M15 17H20L18.595 15.595C18.2141 15.2141 18 14.6973 18 14.155V11C18 8.38757 16.3304 6.16509 14 5.34142V5C14 3.89543 13.1046 3 12 3C10.8954 3 10 3.89543 10 5V5.34142C7.66962 6.16509 6 8.38757 6 11V14.155C6 14.6973 5.78595 15.2141 5.40493 15.595L4 17H9M15 17V18C15 19.6569 13.6569 21 12 21C10.3431 21 9 19.6569 9 18V17M15 17H9"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ══ PAGE: HOME ══ -->
+    <div class="page active" id="page-home">
+
+      <div class="home-greeting">
+        <div class="greeting-line">Command Center</div>
+        <div class="greeting-date" id="greeting-date">Loading date...</div>
+      </div>
+
+      <!-- ALERTS -->
+      <div>
+        <div class="section-head">
+          <div class="section-title">Executive Alerts</div>
+          <div class="section-action">All →</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="alert alert-red">
+            <div style="padding-top:1px;"><div class="dot dot-red"></div></div>
+            <div>
+              <div class="alert-title">EU AI Act — August 2 Deadline</div>
+              <div class="alert-body">33 days remaining. High-risk systems must comply. Shield compliance program launch required.</div>
+              <div class="alert-time">Critical · Requires Decision</div>
+            </div>
+          </div>
+          <div class="alert alert-amber">
+            <div style="padding-top:1px;"><div class="dot dot-amber"></div></div>
+            <div>
+              <div class="alert-title">LinkedIn API Restriction</div>
+              <div class="alert-body">Weekly post blocked by LinkedIn. Manual post required until API access is restored.</div>
+              <div class="alert-time">Action Required · Maya Torres</div>
+            </div>
+          </div>
+          <div class="alert alert-gold">
+            <div style="padding-top:1px;"><div class="dot" style="background:var(--gold-mid);"></div></div>
+            <div>
+              <div class="alert-title">Patronus AI — Partnership Window</div>
+              <div class="alert-body">Competitor raised $50M Series B. Shield positioning as compliance layer is open. Outreach recommended.</div>
+              <div class="alert-time">Opportunity · 4–6 Week Window</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TODAY'S PRIORITIES -->
+      <div>
+        <div class="section-head">
+          <div class="section-title">Today's Priorities</div>
+          <div class="section-action">Assign →</div>
+        </div>
+        <div class="card">
+          <div class="card-row" onclick="openDrawer('task1')">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;">
+              <div class="dot dot-red"></div>
+              <div class="row-body">
+                <div class="row-name">Launch Shield August 2 Readiness Program</div>
+                <div class="row-desc">Repackage Shield as $35K–$100K compliance audit. 48h to launch.</div>
+              </div>
+            </div>
+            <div class="tag tag-red">Critical</div>
+          </div>
+          <div class="card-row" onclick="openDrawer('task2')">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;">
+              <div class="dot dot-amber"></div>
+              <div class="row-body">
+                <div class="row-name">Publish Agent Governance Landscape 2026</div>
+                <div class="row-desc">2,500-word positioning document. Raven drafts, Rosario edits.</div>
+              </div>
+            </div>
+            <div class="tag tag-amber">5 Days</div>
+          </div>
+          <div class="card-row" onclick="openDrawer('task3')">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;">
+              <div class="dot dot-amber"></div>
+              <div class="row-body">
+                <div class="row-name">Patronus AI Partnership Outreach</div>
+                <div class="row-desc">Email CEO Anand Kannappan + Notable Capital with Shield one-pager.</div>
+              </div>
+            </div>
+            <div class="tag tag-amber">48h</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT STATUS -->
+      <div>
+        <div class="section-head">
+          <div class="section-title">Active Agents</div>
+          <div class="section-action" onclick="goTo('agents')">All →</div>
+        </div>
+        <div class="card">
+          <div class="card-row" onclick="goTo('agents');openAgentChat('raven')">
+            <div class="agent-crest">R</div>
+            <div class="row-body">
+              <div class="row-name">Raven</div>
+              <div class="row-desc">Intelligence Engine — Last briefing 8:00 UTC</div>
+            </div>
+            <div class="row-right">
+              <div class="dot dot-green"></div>
+              <div style="font-size:7.5px;color:var(--text-dim);">Active</div>
+            </div>
+          </div>
+          <div class="card-row" onclick="goTo('agents');openAgentChat('maya')">
+            <div class="agent-crest">M</div>
+            <div class="row-body">
+              <div class="row-name">Maya Torres</div>
+              <div class="row-desc">LinkedIn — API blocked, manual needed</div>
+            </div>
+            <div class="row-right">
+              <div class="dot dot-amber"></div>
+              <div style="font-size:7.5px;color:var(--text-dim);">Blocked</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATIONS STATS -->
+      <div>
+        <div class="section-head"><div class="section-title">Operations Overview</div></div>
+        <div class="stat-grid">
+          <div class="stat-block">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Active Automations</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Brain Documents</div>
+            <div class="stat-change">+4 today</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-value">33</div>
+            <div class="stat-label">Days to EU Deadline</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Competitors Tracked</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ PAGE: AGENTS ══ -->
+    <div class="page" id="page-agents">
+
+      <div class="section-head" style="margin-bottom:4px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--gold-bright);">Agent Center</div>
+      </div>
+
+      <div class="pill-row">
+        <div class="pill active">All</div>
+        <div class="pill">Active</div>
+        <div class="pill">Intelligence</div>
+        <div class="pill">Content</div>
+        <div class="pill">Research</div>
+      </div>
+
+      <!-- RAVEN -->
+      <div class="card" style="cursor:pointer;" onclick="openAgentChat('raven')">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div class="agent-crest" style="width:52px;height:52px;font-size:18px;">R</div>
+          <div style="flex:1;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold-bright);">Raven</div>
+            <div style="font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:2px;">Institutional Intelligence Engine</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <div class="dot dot-green"></div>
+              <div style="font-size:8px;color:var(--green);">Active — Fully Operational</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold-bright);">3</div>
+            <div style="font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);">Automations</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold-bright);">Daily</div>
+            <div style="font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);">Briefings</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold-bright);">21</div>
+            <div style="font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);">Brain Folders</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="font-size:8.5px;color:var(--text-dim);">Current Mission</div>
+          <div style="font-size:11px;color:var(--text);margin-top:4px;line-height:1.4;">Shield OS command center build · Daily intelligence briefings · Competitive monitoring</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:78%;"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <div style="font-size:7.5px;color:var(--text-dim);">Mission Progress</div>
+          <div style="font-size:7.5px;color:var(--gold-mid);">78%</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <div class="btn btn-gold" style="flex:1;" onclick="event.stopPropagation();openAgentChat('raven')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Open Chat
+          </div>
+          <div class="btn btn-ghost" style="flex:1;" onclick="event.stopPropagation();openDrawer('raven-tasks')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Tasks
+          </div>
+        </div>
+      </div>
+
+      <!-- MAYA TORRES -->
+      <div class="card" style="cursor:pointer;" onclick="openAgentChat('maya')">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div class="agent-crest" style="width:52px;height:52px;font-size:18px;">M</div>
+          <div style="flex:1;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold-bright);">Maya Torres</div>
+            <div style="font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:2px;">Public Voice · LinkedIn Authority</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <div class="dot dot-amber"></div>
+              <div style="font-size:8px;color:var(--amber);">Blocked — LinkedIn API restricted</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="margin-top:12px;">
+          <div style="font-size:8.5px;color:var(--text-dim);">Current Mission</div>
+          <div style="font-size:11px;color:var(--text);margin-top:4px;line-height:1.4;">Weekly LinkedIn posting on AI governance · Building Lunara's public authority in AI trust space</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <div class="btn btn-gold" style="flex:1;" onclick="event.stopPropagation();openAgentChat('maya')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Open Chat
+          </div>
+          <div class="btn btn-ghost" style="flex:1;" onclick="event.stopPropagation();">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>
+            Manual Post
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD AGENT -->
+      <div class="btn btn-ghost" style="border-style:dashed;" onclick="openDrawer('new-agent')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Commission New Agent
+      </div>
+
+    </div>
+
+    <!-- ══ PAGE: INTELLIGENCE ══ -->
+    <div class="page" id="page-intel">
+
+      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--gold-bright);margin-bottom:4px;">Intelligence</div>
+
+      <div class="pill-row">
+        <div class="pill active">All</div>
+        <div class="pill">Briefings</div>
+        <div class="pill">Competitive</div>
+        <div class="pill">Regulatory</div>
+        <div class="pill">Market</div>
+      </div>
+
+      <!-- TODAY'S BRIEFING -->
+      <div class="card" style="cursor:pointer;" onclick="openDrawer('briefing-today')">
+        <div class="classification">■ DAILY BRIEFING — VERIFIED INTELLIGENCE</div>
+        <div class="card-title">June 30, 2026 — Executive Briefing</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <div class="tag tag-red">3 Critical</div>
+          <div class="tag tag-amber">2 Alerts</div>
+          <div class="tag tag-gold">★★★★★</div>
+        </div>
+        <div class="divider" style="margin:10px 0;"></div>
+        <div class="report-text">Agent governance market crystallized — Trust3 AI, Willow, Geordie AI, Snyk Evo all entered. CrowdStrike moving on agent identity. Shield's compliance layer is unclaimed. 33 days to EU AI Act deadline.</div>
+        <div class="card-meta">Delivered 08:00 UTC · Raven · Filed to 19 - DAILY LOGS</div>
+      </div>
+
+      <!-- COMPETITIVE SWEEP -->
+      <div class="card" style="cursor:pointer;" onclick="openDrawer('competitive-sweep')">
+        <div class="classification">■ COMPETITIVE INTELLIGENCE</div>
+        <div class="card-title">Agent Governance Landscape 2026</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <div class="tag tag-blue">6 Players</div>
+          <div class="tag tag-gold">★★★★</div>
+        </div>
+        <div class="divider" style="margin:10px 0;"></div>
+        <div class="report-text">Geordie AI ($30M Series A), Patronus AI ($50M Series B), Willow ($7M seed), Trust3 AI (Microsoft), Snyk Evo, CrowdStrike. Shield's positioning as compliance registry is unique and unclaimed.</div>
+        <div class="card-meta">June 28, 2026 · Weekly Sweep · 17 - RESEARCH</div>
+      </div>
+
+      <!-- 19 KEYS DOSSIER -->
+      <div class="card" style="cursor:pointer;" onclick="openDrawer('19keys-dossier')">
+        <div class="classification">■ INTELLIGENCE DOSSIER</div>
+        <div class="card-title">19 Keys — AI Systems & Frameworks</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <div class="tag tag-gold">Adopted</div>
+          <div class="tag tag-green">Filed</div>
+        </div>
+        <div class="divider" style="margin:10px 0;"></div>
+        <div class="report-text">Boil the Ocean, The Forge, Epistemic Humility, Voice Architecture. 50-agent org chart model. All frameworks installed into Lunara doctrine.</div>
+        <div class="card-meta">June 28, 2026 · 17 - RESEARCH + 01 - DOCTRINE</div>
+      </div>
+
+    </div>
+
+    <!-- ══ PAGE: BRAIN ══ -->
+    <div class="page" id="page-brain">
+
+      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--gold-bright);margin-bottom:4px;">Institutional Brain</div>
+
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search knowledge... EU AI Act, NewCore, Shield..." id="brain-search" oninput="handleBrainSearch(this.value)">
+      </div>
+
+      <!-- BRAIN FOLDERS -->
+      <div class="section-head"><div class="section-title">Knowledge Folders</div></div>
+      <div class="card" style="padding:8px;">
+        <div id="brain-folders">
+          <!-- folders rendered by JS -->
+        </div>
+      </div>
+
+      <!-- RECENT DOCS -->
+      <div class="section-head"><div class="section-title">Recently Filed</div></div>
+      <div class="card">
+        <div class="card-row" onclick="openDrawer('doc-prompt-doctrine')">
+          <div class="row-body">
+            <div class="row-name">PROMPT DOCTRINE v1.0</div>
+            <div class="row-desc">01 - DOCTRINE · June 28, 2026</div>
+          </div>
+          <div class="tag tag-gold">Doctrine</div>
+        </div>
+        <div class="card-row" onclick="openDrawer('doc-agent-arch')">
+          <div class="row-body">
+            <div class="row-name">AGENT ARCHITECTURE v1.0</div>
+            <div class="row-desc">04 - SYSTEMS · June 28, 2026</div>
+          </div>
+          <div class="tag tag-blue">Systems</div>
+        </div>
+        <div class="card-row" onclick="openDrawer('doc-cognitive-sov')">
+          <div class="row-body">
+            <div class="row-name">COGNITIVE SOVEREIGNTY FRAMEWORK v1.0</div>
+            <div class="row-desc">02 - STRATEGY · June 28, 2026</div>
+          </div>
+          <div class="tag tag-amber">Strategy</div>
+        </div>
+        <div class="card-row" onclick="openDrawer('doc-19keys')">
+          <div class="row-body">
+            <div class="row-name">19 Keys — AI Systems Dossier</div>
+            <div class="row-desc">17 - RESEARCH · June 28, 2026</div>
+          </div>
+          <div class="tag tag-green">Research</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: PROJECTS ══ -->
+    <div class="page" id="page-projects">
+
+      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--gold-bright);margin-bottom:4px;">Projects</div>
+
+      <div class="pill-row">
+        <div class="pill active">Active</div>
+        <div class="pill">All</div>
+        <div class="pill">Shield</div>
+        <div class="pill">Registry</div>
+        <div class="pill">Investors</div>
+      </div>
+
+      <!-- SHIELD OS PROJECT -->
+      <div class="card" style="cursor:pointer;" onclick="openDrawer('proj-shield-os')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="card-title">Shield OS</div>
+          <div class="tag tag-green">Active</div>
+        </div>
+        <div class="card-sub">Private institutional command center. PWA → APK. Phase 1 live. Phase 2 building now.</div>
+        <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:30%;"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <div style="font-size:7.5px;color:var(--text-dim);">Phase 2 of 3</div>
+          <div style="font-size:7.5px;color:var(--gold-mid);">30%</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+          <div class="tag tag-gold">Raven</div>
+          <div class="tag tag-gold">GitHub</div>
+          <div class="tag tag-gold">PWA</div>
+        </div>
+      </div>
+
+      <!-- SHIELD COMPLIANCE -->
+      <div class="card" style="cursor:pointer;" onclick="openDrawer('proj-shield-compliance')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="card-title">Shield — EU AI Act Program</div>
+          <div class="tag tag-red">Critical</div>
+        </div>
+        <div class="card-sub">August 2 Readiness Program. $35K–$100K per customer. 33 days to deadline.</div>
+        <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:0%;"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <div style="font-size:7.5px;color:var(--text-dim);">Not started</div>
+          <div style="font-size:7.5px;color:var(--red);">0%</div>
+        </div>
+      </div>
+
+      <!-- PATRONUS PARTNERSHIP -->
+      <div class="card" style="cursor:pointer;" onclick="openDrawer('proj-patronus')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="card-title">Patronus AI — Partnership</div>
+          <div class="tag tag-amber">Pipeline</div>
+        </div>
+        <div class="card-sub">Shield as compliance layer for Patronus-tested agents. Reach out to CEO + Notable Capital.</div>
+        <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:5%;"></div></div>
+      </div>
+
+      <!-- ADD PROJECT -->
+      <div class="btn btn-ghost" style="border-style:dashed;" onclick="openDrawer('new-project')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        New Project
+      </div>
+
+    </div>
+
+    <!-- ══ PAGE: WORKSPACE ══ -->
+    <div class="page" id="page-workspace">
+
+      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--gold-bright);margin-bottom:4px;">Rosario's Workspace</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="card" style="cursor:pointer;text-align:center;padding:18px 10px;" onclick="openDrawer('assign-mission')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.7)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-mid);">Assign Mission</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:18px 10px;" onclick="openDrawer('create-task')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.7)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-mid);">Create Task</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:18px 10px;" onclick="openDrawer('review-reports')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.7)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-mid);">Reports</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:18px 10px;" onclick="openDrawer('build-strategy')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.7)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-mid);">Strategy</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:18px 10px;" onclick="openDrawer('monitor-ops')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.7)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-mid);">Monitor Ops</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:18px 10px;" onclick="goTo('brain')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.7)" stroke-width="1.5" style="margin:0 auto 10px;display:block;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-mid);">Search Brain</div>
+        </div>
+      </div>
+
+      <!-- PENDING APPROVALS -->
+      <div class="section-head" style="margin-top:4px;"><div class="section-title">Awaiting Founder Approval</div></div>
+      <div class="card">
+        <div class="card-row">
+          <div class="dot dot-red"></div>
+          <div class="row-body">
+            <div class="row-name">Shield Compliance Program — Launch</div>
+            <div class="row-desc">Requires Rosario to approve pricing and scope</div>
+          </div>
+          <div class="btn btn-gold" style="padding:6px 12px;font-size:7px;">Approve</div>
+        </div>
+        <div class="card-row">
+          <div class="dot dot-amber"></div>
+          <div class="row-body">
+            <div class="row-name">Patronus AI Outreach Email</div>
+            <div class="row-desc">Draft ready — needs Founder review</div>
+          </div>
+          <div class="btn btn-gold" style="padding:6px 12px;font-size:7px;">Review</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <div class="nav-item active" onclick="goTo('home')" id="nav-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="goTo('agents')" id="nav-agents">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+      <span>Agents</span>
+    </div>
+    <div class="nav-item" onclick="goTo('intel')" id="nav-intel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Intel</span>
+    </div>
+    <div class="nav-item" onclick="goTo('brain')" id="nav-brain">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><ellipse cx="12" cy="12" rx="10" ry="7"/><path d="M2 12c0-4 4-7 10-7s10 3 10 7-4 7-10 7S2 16 2 12z"/><path d="M12 5v14M2 12h20"/></svg>
+      <span>Brain</span>
+    </div>
+    <div class="nav-item" onclick="goTo('projects')" id="nav-projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Projects</span>
+    </div>
+    <div class="nav-item" onclick="goTo('workspace')" id="nav-workspace">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--gold)"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+      <span>Command</span>
+    </div>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ════ DRAWER ════ -->
+<div id="drawer" onclick="drawerBgClick(event)">
+  <div id="drawer-bg"></div>
+  <div id="drawer-panel">
+    <div class="drawer-handle"></div>
+    <div id="drawer-content"><!-- filled by JS --></div>
+  </div>
+</div>
+
+<!-- ════ AGENT CHAT OVERLAY ════ -->
+<div id="chat-overlay" style="position:fixed;inset:0;z-index:300;background:#000;display:none;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease;">
+  <div style="padding:var(--safe-top) 16px 12px;background:rgba(6,5,3,0.95);border-bottom:1px solid var(--gold-border);display:flex;align-items:center;gap:12px;">
+    <div onclick="closeChat()" style="cursor:pointer;padding:6px;opacity:0.6;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div id="chat-agent-crest" class="agent-crest" style="width:38px;height:38px;font-size:14px;"></div>
+    <div>
+      <div id="chat-agent-name" style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--gold-bright);"></div>
+      <div id="chat-agent-status" style="font-size:8px;color:var(--text-dim);margin-top:1px;"></div>
+    </div>
+  </div>
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;"></div>
+  <div class="chat-input-area" style="padding-bottom:var(--safe-bottom);">
+    <input class="chat-input" type="text" placeholder="Assign mission, ask question, give directive..." id="chat-input-field" onkeydown="if(event.key==='Enter')sendChat()">
+    <div class="chat-send" onclick="sendChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════
+// BOOT
+// ════════════════════════════════════
+const bootStatuses=['Establishing secure connection','Loading institutional brain','Authenticating identity','Synchronizing agent status','Calibrating intelligence systems','Shield OS ready'];
+let bootIdx=0;
+const bootStatusEl=document.getElementById('boot-status');
+const bootInterval=setInterval(()=>{
+  bootIdx++;
+  if(bootIdx<bootStatuses.length){bootStatusEl.textContent=bootStatuses[bootIdx];}
+  else{clearInterval(bootInterval);}
+},520);
+setTimeout(()=>{
+  document.getElementById('boot').classList.add('fade-out');
+  const app=document.getElementById('app');
+  app.classList.add('on');
+  setTimeout(()=>document.getElementById('boot').style.display='none',1200);
+},3500);
+
+// ════════════════════════════════════
+// CLOCK + DATE
+// ════════════════════════════════════
+function updateClock(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent=h+':'+m;
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('greeting-date').textContent=days[now.getDay()]+', '+months[now.getMonth()]+' '+now.getDate()+', '+now.getFullYear();
+}
+updateClock();setInterval(updateClock,30000);
+
+// ════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════
+const pages=['home','agents','intel','brain','projects','workspace'];
+function goTo(id){
+  pages.forEach(p=>{
+    document.getElementById('page-'+p).classList.remove('active');
+    const nav=document.getElementById('nav-'+p);
+    if(nav)nav.classList.remove('active');
+  });
+  document.getElementById('page-'+id).classList.add('active');
+  const nav=document.getElementById('nav-'+id);
+  if(nav)nav.classList.add('active');
+  // scroll to top
+  document.getElementById('page-'+id).scrollTop=0;
+}
+
+// ════════════════════════════════════
+// BRAIN FOLDERS
+// ════════════════════════════════════
+const brainFolders=[
+  {id:'00',name:'Identity',color:'rgba(196,164,107,0.8)'},
+  {id:'01',name:'Doctrine',color:'rgba(196,164,107,0.8)'},
+  {id:'02',name:'Strategy',color:'rgba(80,140,220,0.8)'},
+  {id:'03',name:'Projects',color:'rgba(80,140,220,0.8)'},
+  {id:'04',name:'Systems',color:'rgba(80,200,100,0.8)'},
+  {id:'05',name:'People',color:'rgba(220,170,50,0.8)'},
+  {id:'06',name:'Agents',color:'rgba(220,170,50,0.8)'},
+  {id:'07',name:'Businesses',color:'rgba(220,170,50,0.8)'},
+  {id:'08',name:'Outreach',color:'rgba(220,70,60,0.8)'},
+  {id:'09',name:'Meetings',color:'rgba(220,70,60,0.8)'},
+  {id:'10',name:'Decisions',color:'rgba(196,164,107,0.8)'},
+  {id:'11',name:'Evidence',color:'rgba(80,200,100,0.8)'},
+  {id:'12',name:'Knowledge',color:'rgba(80,140,220,0.8)'},
+  {id:'13',name:'Products',color:'rgba(220,170,50,0.8)'},
+  {id:'14',name:'Website',color:'rgba(80,200,100,0.8)'},
+  {id:'15',name:'Investors',color:'rgba(220,70,60,0.8)'},
+  {id:'16',name:'AI Discovery',color:'rgba(196,164,107,0.8)'},
+  {id:'17',name:'Research',color:'rgba(80,140,220,0.8)'},
+  {id:'18',name:'Maps of Content',color:'rgba(220,170,50,0.8)'},
+  {id:'19',name:'Daily Logs',color:'rgba(80,200,100,0.8)'},
+  {id:'20',name:'Archive',color:'rgba(150,150,150,0.6)'},
+  {id:'21',name:'Open Questions',color:'rgba(220,70,60,0.8)'},
+];
+function renderBrainFolders(filter){
+  const container=document.getElementById('brain-folders');
+  const filtered=filter?brainFolders.filter(f=>f.name.toLowerCase().includes(filter.toLowerCase())):brainFolders;
+  container.innerHTML=filtered.map(f=>`
+    <div class="card-row" onclick="openDrawer('folder-${f.id}')">
+      <div style="width:28px;height:28px;border-radius:4px;background:rgba(196,164,107,0.08);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:8px;letter-spacing:0.1em;color:${f.color};font-family:'Cormorant Garamond',serif;font-weight:600;">${f.id}</span>
+      </div>
+      <div class="row-body">
+        <div class="row-name">${f.id} — ${f.name}</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(196,164,107,0.3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  `).join('');
+}
+renderBrainFolders();
+function handleBrainSearch(val){renderBrainFolders(val);}
+
+// ════════════════════════════════════
+// DRAWER
+// ════════════════════════════════════
+const drawerContents={
+  'task1':'<div class="drawer-title">Shield August 2 Readiness</div><div class="drawer-sub">Critical Priority · 33 Days Remaining</div><div class="card-sub" style="line-height:1.6;">Launch a 3-week compliance audit program for businesses deploying high-risk AI systems in EU scope.<br><br><b style="color:var(--gold-mid);">Price:</b> $35,000–$100,000 per engagement<br><b style="color:var(--gold-mid);">Deliverable:</b> Compliance roadmap + Shield implementation plan<br><b style="color:var(--gold-mid);">Timeline:</b> 48 hours to launch<br><b style="color:var(--gold-mid);">Expected pipeline:</b> $150K–$250K before August 2</div>',
+  'task2':'<div class="drawer-title">Agent Governance Landscape</div><div class="drawer-sub">Strategic Content · 5 Days</div><div class="card-sub" style="line-height:1.6;">2,500-word definitive positioning document mapping the 6 agent governance layers. Establishes Shield as the compliance registry layer. Becomes RFP template and SEO anchor.<br><br><b style="color:var(--gold-mid);">Owner:</b> Raven drafts, Rosario edits for voice<br><b style="color:var(--gold-mid);">Distribution:</b> LinkedIn, Lunara website, investor materials</div>',
+  'task3':'<div class="drawer-title">Patronus AI Partnership</div><div class="drawer-sub">Business Development · 48h</div><div class="card-sub" style="line-height:1.6;">Reach out to Patronus CEO Anand Kannappan + Notable Capital partner Glenn Solomon. One-pager: "Shield as the Compliance Layer for Patronus-Tested Agents."<br><br><b style="color:var(--gold-mid);">Why:</b> Patronus raised $50M, nearly all frontier labs are customers. Shield downstream of their evaluation = distribution at scale.</div>',
+  'notifications':'<div class="drawer-title">Alerts</div><div class="drawer-sub">3 Active</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;"><div class="alert alert-red"><div><div class="alert-title">EU AI Act — 33 Days</div><div class="alert-body">High-risk AI systems must comply by August 2, 2026.</div></div></div><div class="alert alert-amber"><div><div class="alert-title">LinkedIn API Blocked</div><div class="alert-body">Maya Torres weekly post requires manual publish.</div></div></div><div class="alert alert-gold"><div><div class="alert-title">Patronus Partnership Window</div><div class="alert-body">$50M Series B — outreach window open now.</div></div></div></div>',
+  'new-agent':'<div class="drawer-title">Commission New Agent</div><div class="drawer-sub">Define Role & Mission</div><div class="card-sub">This feature connects to Raven to commission and configure a new institutional agent. Coming in Phase 2.</div>',
+  'new-project':'<div class="drawer-title">New Project</div><div class="drawer-sub">Create Institutional Initiative</div><div class="card-sub">Full project creation coming in Phase 2 with Google Drive integration.</div>',
+  'assign-mission':'<div class="drawer-title">Assign Mission</div><div class="drawer-sub">Direct an Agent</div><div class="card-sub" style="line-height:1.6;">Select an agent and define their mission. Full assignment workflow coming in Phase 2.<br><br>For now, use the Agent Center to open a chat and assign directly.</div>',
+};
+function openDrawer(id){
+  const content=drawerContents[id]||`<div class="drawer-title">${id}</div><div class="drawer-sub">Coming in Phase 2</div><div class="card-sub">This module integrates with Google Drive and the institutional brain in Phase 2.</div>`;
+  document.getElementById('drawer-content').innerHTML=content;
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');}
+function drawerBgClick(e){if(e.target===document.getElementById('drawer-bg'))closeDrawer();}
+
+// ════════════════════════════════════
+// AGENT CHAT
+// ════════════════════════════════════
+const agentData={
+  raven:{name:'Raven',crest:'R',status:'Active — Intelligence Engine',messages:[
+    {from:'agent',text:'Raven online. Institutional intelligence systems active. Good morning, Rosario. How can I serve Lunara today?',time:'08:00'},
+    {from:'agent',text:'Today\'s briefing has been delivered. Three critical priorities: Shield August 2 launch, Agent Governance content, Patronus outreach. All within your 33-day compliance window.',time:'08:01'},
+  ]},
+  maya:{name:'Maya Torres',crest:'M',status:'Blocked — LinkedIn API restricted',messages:[
+    {from:'agent',text:'Maya Torres online. LinkedIn post for this week is drafted and ready. API is currently restricted — manual publish required. Do you want me to share the post text?',time:'09:00'},
+  ]},
+};
+let currentAgent=null;
+function openAgentChat(id){
+  currentAgent=id;
+  const agent=agentData[id];
+  document.getElementById('chat-agent-crest').textContent=agent.crest;
+  document.getElementById('chat-agent-name').textContent=agent.name;
+  document.getElementById('chat-agent-status').textContent=agent.status;
+  const msgs=document.getElementById('chat-messages');
+  msgs.innerHTML=agent.messages.map(m=>`
+    <div class="msg ${m.from==='agent'?'from-agent':'from-founder'}">
+      <div class="msg-bubble">${m.text}</div>
+      <div class="msg-time">${m.time}</div>
+    </div>
+  `).join('');
+  msgs.scrollTop=msgs.scrollHeight;
+  const overlay=document.getElementById('chat-overlay');
+  overlay.style.display='flex';
+  overlay.style.flexDirection='column';
+  setTimeout(()=>overlay.style.transform='translateX(0)',10);
+}
+function closeChat(){
+  const overlay=document.getElementById('chat-overlay');
+  overlay.style.transform='translateX(100%)';
+  setTimeout(()=>overlay.style.display='none',300);
+}
+function sendChat(){
+  const input=document.getElementById('chat-input-field');
+  const text=input.value.trim();
+  if(!text||!currentAgent)return;
+  const agent=agentData[currentAgent];
+  const now=new Date();
+  const time=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  agent.messages.push({from:'founder',text,time});
+  input.value='';
+  const msgs=document.getElementById('chat-messages');
+  msgs.innerHTML+=`<div class="msg from-founder"><div class="msg-bubble">${text}</div><div class="msg-time">${time}</div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  // Simulated agent response
+  setTimeout(()=>{
+    const responses={
+      raven:['Understood, Rosario. Processing directive now.','Acknowledged. I\'ll action this immediately and report back.','Intelligence logged. Proceeding with your directive.'],
+      maya:['Received. I\'ll prepare the content accordingly.','Understood. Standing by for your direction.'],
+    };
+    const arr=responses[currentAgent];
+    const reply=arr[Math.floor(Math.random()*arr.length)];
+    agent.messages.push({from:'agent',text:reply,time});
+    msgs.innerHTML+=`<div class="msg from-agent"><div class="msg-bubble">${reply}</div><div class="msg-time">${time}</div></div>`;
+    msgs.scrollTop=msgs.scrollHeight;
+  },1200);
+}
+
+// ════════════════════════════════════
+// SERVICE WORKER
+// ════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
